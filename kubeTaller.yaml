@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: tallermanual
+  labels:
+    app: tallermanual
+spec:
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 80
+  selector:
+    app: tallermanual
+  type: LoadBalancer  
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: tallermanual
+  labels:
+    app: tallermanual
+spec:
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: tallermanual
+    spec:
+      containers:
+      - image: <Enlace de la imagen en azure>
+        name: tallermanual
+        ports:
+        - containerPort: 80
+          name: http
+        resources:
+          limits:
+            cpu: 900m
+          requests:
+            cpu: 100m
+      imagePullSecrets:
+        - name: <nombre del secreto en azure>
+---      
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: tallermanual
+spec:
+  scaleTargetRef:
+    kind: Deployment
+    name: tallermanual
+  minReplicas: 2
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 70
